@@ -1,5 +1,34 @@
+name: Build & Deploy to cPanel (FTPS)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # If you want caching, uncomment the next line AFTER package-lock.json is present:
+          # cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm i
+
+      - name: Build project
+        run: npm run build
+
+      # ---- FTPS DEPLOY (cPanel usually requires FTPS on port 21) ----
       - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -7,5 +36,7 @@
           protocol: ftps
           port: 21
           local-dir: dist/
-          server-dir: public_html/
+          # most cPanel accounts expect public_html at this path – keep the leading slash:
+          server-dir: /public_html/
+          # safety: don’t delete files outside of server-dir
           dangerous-clean-slate: false
