@@ -1,36 +1,36 @@
-name: Build & Deploy to cPanel (SFTP)
+name: Build & Deploy to cPanel (FTPS)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci || npm i
 
-      - name: Build
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      - name: Build project
         run: npm run build
 
-      - name: Deploy via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Deploy via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4
         with:
           server: ${{ secrets.FTP_HOST }}
-          port: ${{ secrets.SFTP_PORT || 22 }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local_path: dist/*
-          remote_path: /public_html/
-          args: "-o StrictHostKeyChecking=no"
+          protocol: ftps
+          local-dir: dist/
+          server-dir: public_html/
+          dangerous-clean-slate: false
